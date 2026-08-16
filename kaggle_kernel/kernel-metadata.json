@@ -1,0 +1,17 @@
+{
+  "id": "samarthpasalkar/monasteryai-3dgs-reconstruction",
+  "title": "MonasteryAI 3DGS Reconstruction",
+  "code_file": "train_3dgs_emei.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "samarthpasalkar/emei-120-clean-frames"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

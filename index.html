@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MonasteryAI — VGGT-Omega 3D Video Walkthrough & Spatial Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Three.js & Loaders -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.10.1/dist/nipplejs.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #05080c;
+      --panel-bg: rgba(10, 16, 24, 0.85);
+      --panel-border: rgba(212, 175, 55, 0.35);
+      --gold-primary: #f3c254;
+      --gold-glow: rgba(243, 194, 84, 0.45);
+      --crimson: #9e2a2b;
+      --crimson-glow: rgba(158, 42, 43, 0.6);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border: 1.5px solid rgba(243, 194, 84, 0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Top HUD Header */
+    .top-header {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .brand-box {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 8px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--crimson), #5c1415);
+      border: 1px solid var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--gold-primary);
+      box-shadow: 0 0 12px var(--gold-glow);
+    }
+
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--gold-primary);
+      letter-spacing: 0.5px;
+    }
+
+    .monastery-select {
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      color: var(--text-main);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+      cursor: pointer;
+      margin-top: 3px;
+    }
+
+    /* Navigation Mode Switcher */
+    .nav-mode-box {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 4px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(135deg, var(--crimson), #731b1c);
+      color: #fff;
+      border: 1px solid var(--gold-primary);
+      box-shadow: 0 0 14px var(--crimson-glow);
+    }
+
+    /* Top Right Mini-Radar HUD */
+    .radar-box {
+      position: absolute;
+      top: 80px;
+      right: 16px;
+      width: 140px;
+      height: 140px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 50%;
+      z-index: 15;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #radar-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .radar-tag {
+      position: absolute;
+      bottom: -22px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.65rem;
+      color: var(--gold-primary);
+      font-family: monospace;
+      white-space: nowrap;
+    }
+
+    /* Desktop Controls Help */
+    .controls-card {
+      position: absolute;
+      top: 80px;
+      left: 16px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .key-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--gold-primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    /* Proximity Notification Banner */
+    #proximity-banner {
+      position: absolute;
+      top: 86px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-25px);
+      background: linear-gradient(135deg, rgba(158, 42, 43, 0.95), rgba(20, 27, 38, 0.95));
+      border: 1px solid var(--gold-primary);
+      box-shadow: 0 8px 32px var(--gold-glow);
+      border-radius: 30px;
+      padding: 8px 22px;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #proximity-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* On-Screen Touch Joysticks for Mobile */
+    .joystick-zone {
+      position: absolute;
+      bottom: 25px;
+      width: 130px;
+      height: 130px;
+      z-index: 25;
+      display: none;
+    }
+
+    #joy-left { left: 20px; }
+    #joy-right { right: 20px; }
+
+    /* Interactive AI Guide Card */
+    .guide-card {
+      position: absolute;
+      bottom: 20px;
+      left: 16px;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+      z-index: 20;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .guide-header {
+      background: linear-gradient(135deg, rgba(158, 42, 43, 0.45), rgba(243, 194, 84, 0.18));
+      border-bottom: 1px solid var(--panel-border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .guide-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-chat {
+      padding: 12px;
+      max-height: 160px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chat-bubble {
+      padding: 9px 13px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      line-height: 1.42;
+    }
+
+    .chat-bubble.monk {
+      background: rgba(243, 194, 84, 0.12);
+      border-left: 3px solid var(--gold-primary);
+      color: var(--text-main);
+      align-self: flex-start;
+    }
+
+    .chat-bubble.user {
+      background: rgba(255, 255, 255, 0.1);
+      border-right: 3px solid #38bdf8;
+      color: #e2e8f0;
+      align-self: flex-end;
+    }
+
+    .quick-chips {
+      padding: 4px 12px 8px 12px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .quick-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-chip:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+
+    .guide-input-row {
+      padding: 8px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      gap: 6px;
+    }
+
+    .guide-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 7px 11px;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .guide-input:focus { border-color: var(--gold-primary); }
+
+    .guide-btn {
+      background: var(--crimson);
+      border: 1px solid var(--gold-primary);
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Loading Overlay */
+    #loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(7, 10, 15, 0.95);
+      backdrop-filter: blur(18px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+
+    .spinner {
+      width: 54px;
+      height: 54px;
+      border: 3px solid rgba(243, 194, 84, 0.15);
+      border-top-color: var(--gold-primary);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gold-primary);
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .controls-card { display: none; }
+      .joystick-zone { display: block; }
+      .guide-card { left: 10px; right: 10px; width: auto; bottom: 165px; }
+      .radar-box { top: 76px; right: 10px; width: 110px; height: 110px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WebGL 3D Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+  <div id="crosshair"></div>
+
+  <!-- Top Header HUD -->
+  <div class="top-header">
+    <div class="brand-box">
+      <div class="brand-logo">☸</div>
+      <div>
+        <div class="brand-title">MonasteryAI</div>
+        <select class="monastery-select" id="monastery-select" onchange="switchMonastery(this.value)">
+          <option value="namdroling" selected>Namdroling Golden Temple (Main Shrine)</option>
+          <option value="emei">The Great Emei Mountain (Golden Summit)</option>
+          <option value="pelling">Pemayangtse Monastery (West Sikkim)</option>
+          <option value="rumtek">Rumtek Monastery (East Sikkim)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Navigation Mode Switcher -->
+    <div class="nav-mode-box">
+      <button class="nav-btn active" id="btn-walk" onclick="setMode('walk')">
+        <span>🚶</span> First-Person Walk
+      </button>
+      <button class="nav-btn" id="btn-orbit" onclick="setMode('orbit')">
+        <span>🔄</span> Aerial Orbit
+      </button>
+      <button class="nav-btn" id="btn-onsite" onclick="setMode('onsite')">
+        <span>📍</span> On-Site GPS
+      </button>
+    </div>
+  </div>
+
+  <!-- Mini-Radar HUD -->
+  <div class="radar-box">
+    <canvas id="radar-canvas" width="140" height="140"></canvas>
+    <div class="radar-tag" id="radar-coords">X: 0.0 | Z: 18.0</div>
+  </div>
+
+  <!-- Proximity Notification Banner -->
+  <div id="proximity-banner">
+    <span>🔔</span>
+    <div id="proximity-text">Approaching Monument</div>
+  </div>
+
+  <!-- Desktop Controls Help -->
+  <div class="controls-card" id="desktop-controls">
+    <div style="font-weight: 700; color: var(--gold-primary); margin-bottom: 2px;">Walkthrough Controls:</div>
+    <div><span class="key-badge">W</span> <span class="key-badge">A</span> <span class="key-badge">S</span> <span class="key-badge">D</span> Walk Around</div>
+    <div><span class="key-badge">Mouse Drag</span> Look 360° / Pan View</div>
+    <div><span class="key-badge">Shift</span> Fast Sprint (2x Speed)</div>
+  </div>
+
+  <!-- Mobile Touch Joysticks -->
+  <div class="joystick-zone" id="joy-left"></div>
+  <div class="joystick-zone" id="joy-right"></div>
+
+  <!-- Interactive AI Monastic Guide Widget -->
+  <div class="guide-card">
+    <div class="guide-header">
+      <div class="guide-title">
+        <span>☸</span>
+        <span>Monastic AI Guide</span>
+      </div>
+      <button style="background: none; border: none; color: var(--gold-primary); cursor: pointer; font-size: 0.72rem;" onclick="toggleVoice()">
+        <span id="voice-icon">🔊</span> Voice On
+      </button>
+    </div>
+
+    <div class="guide-chat" id="chat-messages">
+      <div class="chat-bubble monk">
+        Welcome to the Golden Temple of Namdroling Monastery. Explore the grand central staircase, painted veranda colonnade, and gilded roof pinnacles!
+      </div>
+    </div>
+
+    <div class="quick-chips">
+      <div class="quick-chip" onclick="askGuide('Tell me about the Golden Temple')">Golden Temple</div>
+      <div class="quick-chip" onclick="askGuide('Tell me about the Grand Staircase')">Grand Staircase</div>
+      <div class="quick-chip" onclick="askGuide('What is Namdroling Monastery history?')">Namdroling History</div>
+    </div>
+
+    <div class="guide-input-row">
+      <input type="text" id="guide-input-field" class="guide-input" placeholder="Ask question (offline)..." onkeypress="if(event.key==='Enter') sendQuestion()" />
+      <button class="guide-btn" onclick="sendQuestion()">Ask</button>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-title">Loading Photogrammetric 3D Scan...</div>
+    <div class="loading-progress" id="load-status" style="font-size: 0.8rem; color: var(--text-muted);">Fetching VGGT 3D model from Supabase CDN...</div>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------------------
+    // 1. SUPABASE LIVE 3D MODELS REPOSITORY
+    // -------------------------------------------------------------------------
+    const MONASTERIES = {
+      namdroling: {
+        name: "Namdroling Golden Temple (Main Shrine)",
+        glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/namdroling_shrine.glb",
+        beacons: [
+          { name: "Grand Central Staircase", x: 0, z: 2.0, radius: 4.5, text: "You are ascending the wide stone steps of Namdroling Golden Temple towards the upper prayer terrace." },
+          { name: "Veranda Colonnade & Murals", x: 0, z: -4.0, radius: 5.5, text: "The open ground-floor veranda features vibrant hand-painted Tibetan Buddhist frescoes and entrance doors." },
+          { name: "Golden Roof & Spire Pinnacles", x: 0, z: -8.0, radius: 6.0, text: "The upper roof is crowned with gilded copper eaves, four corner victory banners, and the central Wheel of Dharma." }
+        ]
+      },
+      emei: {
+        name: "The Great Emei Mountain (Golden Summit)",
+        glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/emei_4_view.glb",
+        beacons: [
+          { name: "48-Meter Golden Samantabhadra Statue", x: 0, z: -5.0, radius: 6.0, text: "You are standing before the multi-faced Golden Statue of Bodhisattva Samantabhadra, seated atop four sacred white elephants at the peak of Mount Emei." },
+          { name: "Golden Summit Main Temple Hall", x: -12, z: 2.0, radius: 5.5, text: "This is the Main Temple Sanctuary of the Golden Summit, perched at 3,077 meters altitude above the sea of clouds." },
+          { name: "Sea of Clouds Overlook Terrace", x: 12, z: 8.0, radius: 5.0, text: "From this cliff edge terrace, pilgrims witness the legendary Buddha's Light (halo phenomenon) over the misty mountain valleys." }
+        ]
+      },
+      pelling: {
+        name: "Pemayangtse Monastery (Pelling, West Sikkim)",
+        glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/pelling.glb",
+        beacons: [
+          { name: "Sangtokpalri Celestial Masterpiece", x: 0, z: -6.0, radius: 5.0, text: "You are standing before the 7-tiered hand-carved wooden masterpiece of Sangtokpalri, depicting the celestial heaven of Guru Padmasambhava." },
+          { name: "Main Nyingma Prayer Hall", x: 0, z: 2.0, radius: 5.0, text: "Welcome to the central prayer hall of Pemayangtse, founded in 1705 AD by Lhatsun Chempo." }
+        ]
+      },
+      rumtek: {
+        name: "Rumtek Monastery — Main Shrine (East Sikkim)",
+        glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/rumtek_main_shrine.glb",
+        beacons: [
+          { name: "Main Dukhang Shrine Hall", x: 0, z: -10.0, radius: 6.0, text: "You are standing before the Main Dukhang Shrine Hall of Rumtek Monastery, featuring traditional Tibetan murals, silk thangkas, and golden roof spires." },
+          { name: "Sacred Courtyard Pillar", x: 1.5, z: -3.0, radius: 3.5, text: "This sacred stone pillar stands at the center of the monastic courtyard, where the annual Cham sacred masked dances are performed." },
+          { name: "Monks' Residential Wing", x: 8.0, z: -5.0, radius: 5.0, text: "The residential quarters and study halls flank the central courtyard, housing over 300 Kagyu Buddhist monks." }
+        ]
+      }
+    };
+
+    let currentMonasteryKey = "namdroling";
+    let activeBeacons = MONASTERIES[currentMonasteryKey].beacons;
+
+    // -------------------------------------------------------------------------
+    // 2. THREE.JS 3D SCENE & ENGINE SETUP
+    // -------------------------------------------------------------------------
+    const canvas = document.getElementById("webgl-canvas");
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x060a10);
+    scene.fog = new THREE.FogExp2(0x060a10, 0.01);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1200);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
+
+    // Orbit Controls
+    const orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+    orbitControls.dampingFactor = 0.05;
+    orbitControls.maxPolarAngle = Math.PI / 2 + 0.02;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffeedd, 1.4);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.5);
+    sunLight.position.set(30, 50, 30);
+    scene.add(sunLight);
+
+    const blueLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+    blueLight.position.set(-30, 20, -30);
+    scene.add(blueLight);
+
+    // Mountain Ground Plane
+    const groundGeo = new THREE.PlaneGeometry(160, 160);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.05;
+    scene.add(ground);
+
+    // Stone Plaza Surface
+    const plaza = new THREE.Mesh(
+      new THREE.BoxGeometry(60, 0.3, 60),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 })
+    );
+    plaza.position.set(0, 0.1, 0);
+    scene.add(plaza);
+
+    // -------------------------------------------------------------------------
+    // 3. PHOTOGRAMMETRIC 3D SCAN LOADER & 1:1 SCALE NORMALIZER
+    // -------------------------------------------------------------------------
+    const gltfLoader = new THREE.GLTFLoader();
+    let currentModelMesh = null;
+
+    function loadPhotogrammetricModel(url) {
+      const overlay = document.getElementById("loading-overlay");
+      overlay.style.display = "flex";
+      overlay.style.opacity = 1;
+
+      if (currentModelMesh) scene.remove(currentModelMesh);
+
+      gltfLoader.load(
+        url,
+        (gltf) => {
+          currentModelMesh = gltf.scene;
+
+          // Compute raw bounds & normalize to life-size 1:1 scale (40m width)
+          const box = new THREE.Box3().setFromObject(currentModelMesh);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+
+          // Scale factor to convert raw camera units to life-size architectural meters
+          const targetWidth = 36.0;
+          const maxDim = Math.max(size.x, size.z);
+          const scale = maxDim > 0 ? (targetWidth / maxDim) : 25.0;
+
+          currentModelMesh.scale.set(scale, scale, scale);
+          currentModelMesh.position.set(-center.x * scale, -box.min.y * scale + 0.2, -center.z * scale);
+
+          // Apply Point Cloud & Material Tuning
+          currentModelMesh.traverse((child) => {
+            if (child.isMesh) {
+              child.material.side = THREE.DoubleSide;
+              child.material.roughness = 0.6;
+            }
+            if (child.isPoints) {
+              // Create soft circular splat texture
+              const pCanvas = document.createElement('canvas');
+              pCanvas.width = 32;
+              pCanvas.height = 32;
+              const pCtx = pCanvas.getContext('2d');
+              const grad = pCtx.createRadialGradient(16, 16, 0, 16, 16, 16);
+              grad.addColorStop(0, 'rgba(255,255,255,1)');
+              grad.addColorStop(0.7, 'rgba(255,255,255,0.7)');
+              grad.addColorStop(1, 'rgba(255,255,255,0)');
+              pCtx.fillStyle = grad;
+              pCtx.fillRect(0, 0, 32, 32);
+              const splatTex = new THREE.CanvasTexture(pCanvas);
+
+              child.material = new THREE.PointsMaterial({
+                size: 0.09,
+                vertexColors: true,
+                map: splatTex,
+                transparent: true,
+                alphaTest: 0.05,
+                depthWrite: true,
+                sizeAttenuation: true
+              });
+            }
+          });
+
+          scene.add(currentModelMesh);
+
+          overlay.style.opacity = 0;
+          setTimeout(() => overlay.style.display = "none", 400);
+        },
+        (xhr) => {
+          const mb = (xhr.loaded / (1024 * 1024)).toFixed(1);
+          document.getElementById("load-status").innerText = `Downloading Photogrammetric 3D Scan (${mb} MB)...`;
+        },
+        (err) => {
+          console.warn("Scan loading notice:", err);
+          overlay.style.opacity = 0;
+          setTimeout(() => overlay.style.display = "none", 400);
+        }
+      );
+    }
+
+    function switchMonastery(key) {
+      currentMonasteryKey = key;
+      activeBeacons = MONASTERIES[key].beacons;
+      spawnBeacons();
+      loadPhotogrammetricModel(MONASTERIES[key].glb);
+
+      appendMessage("monk", `Loaded 3D Scan of ${MONASTERIES[key].name}. Walk around the 3D model to explore!`);
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. SPATIAL BEACONS
+    // -------------------------------------------------------------------------
+    const beaconGroup = new THREE.Group();
+    scene.add(beaconGroup);
+
+    function spawnBeacons() {
+      while (beaconGroup.children.length > 0) {
+        beaconGroup.remove(beaconGroup.children[0]);
+      }
+
+      activeBeacons.forEach(b => {
+        const bg = new THREE.Group();
+        bg.position.set(b.x, 0.2, b.z);
+
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.9, 1.4, 32),
+          new THREE.MeshBasicMaterial({ color: 0xf3c254, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+        );
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.05;
+        bg.add(ring);
+
+        const beam = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.1, 0.4, 6, 16),
+          new THREE.MeshBasicMaterial({ color: 0xf3c254, transparent: true, opacity: 0.35 })
+        );
+        beam.position.y = 3;
+        bg.add(beam);
+
+        const diamond = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.4),
+          new THREE.MeshStandardMaterial({ color: 0xf3c254, metalness: 0.9, roughness: 0.1 })
+        );
+        diamond.position.y = 3.8;
+        diamond.name = "diamond";
+        bg.add(diamond);
+
+        beaconGroup.add(bg);
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. FIRST-PERSON TRAVELER CONTROLLER & PHYSICS
+    // -------------------------------------------------------------------------
+    let currentMode = "walk";
+    const player = {
+      position: new THREE.Vector3(0, 2.5, 10),
+      yaw: 0,
+      pitch: -0.05,
+      moveSpeed: 7.0,
+      turnSpeed: 2.2,
+      bobTimer: 0
+    };
+
+    const keys = { w: false, a: false, s: false, d: false, shift: false };
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (keys.hasOwnProperty(k)) keys[k] = true;
+      if (e.key === "Shift") keys.shift = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      const k = e.key.toLowerCase();
+      if (keys.hasOwnProperty(k)) keys[k] = false;
+      if (e.key === "Shift") keys.shift = false;
+    });
+
+    let isMouseDown = false;
+    let lastMouseX = 0, lastMouseY = 0;
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (currentMode === "walk") {
+        isMouseDown = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+      }
+    });
+
+    window.addEventListener("mouseup", () => isMouseDown = false);
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (isMouseDown && currentMode === "walk") {
+        const deltaX = e.clientX - lastMouseX;
+        const deltaY = e.clientY - lastMouseY;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+
+        player.yaw -= deltaX * 0.0032;
+        player.pitch = Math.max(-Math.PI / 2.8, Math.min(Math.PI / 2.8, player.pitch - deltaY * 0.0032));
+      }
+    });
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn-${mode}`).classList.add("active");
+
+      const crosshair = document.getElementById("crosshair");
+
+      if (mode === "orbit") {
+        orbitControls.enabled = true;
+        camera.position.set(0, 22, 34);
+        orbitControls.target.set(0, 4, 0);
+        crosshair.style.display = "none";
+      } else {
+        orbitControls.enabled = false;
+        crosshair.style.display = "block";
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. PROXIMITY DETECTION & SPATIAL AUDIO GUIDE
+    // -------------------------------------------------------------------------
+    let activeBeaconZone = null;
+    let toastTimer = null;
+
+    function checkSpatialProximity() {
+      let found = null;
+      for (const b of activeBeacons) {
+        const dist = Math.hypot(player.position.x - b.x, player.position.z - b.z);
+        if (dist <= b.radius) {
+          found = b;
+          break;
+        }
+      }
+
+      if (found && found !== activeBeaconZone) {
+        activeBeaconZone = found;
+
+        const banner = document.getElementById("proximity-banner");
+        document.getElementById("proximity-text").innerText = `Approaching: ${found.name}`;
+        banner.classList.add("show");
+
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => banner.classList.remove("show"), 4500);
+
+        appendMessage("monk", found.text);
+      } else if (!found) {
+        activeBeaconZone = null;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. REAL-TIME MINI-RADAR HUD
+    // -------------------------------------------------------------------------
+    const radarCanvas = document.getElementById("radar-canvas");
+    const radarCtx = radarCanvas.getContext("2d");
+
+    function updateRadarHUD() {
+      const w = radarCanvas.width;
+      const h = radarCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const scale = 2.2;
+
+      radarCtx.clearRect(0, 0, w, h);
+
+      radarCtx.strokeStyle = "rgba(212, 175, 55, 0.25)";
+      radarCtx.lineWidth = 1;
+      radarCtx.beginPath();
+      radarCtx.arc(cx, cy, 26, 0, Math.PI * 2);
+      radarCtx.arc(cx, cy, 54, 0, Math.PI * 2);
+      radarCtx.stroke();
+
+      activeBeacons.forEach(b => {
+        const bx = cx + (b.x - player.position.x) * scale;
+        const by = cy + (b.z - player.position.z) * scale;
+
+        radarCtx.fillStyle = "#f3c254";
+        radarCtx.beginPath();
+        radarCtx.arc(bx, by, 4, 0, Math.PI * 2);
+        radarCtx.fill();
+      });
+
+      radarCtx.save();
+      radarCtx.translate(cx, cy);
+      radarCtx.rotate(-player.yaw);
+
+      radarCtx.fillStyle = "rgba(56, 189, 248, 0.28)";
+      radarCtx.beginPath();
+      radarCtx.moveTo(0, 0);
+      radarCtx.arc(0, 0, 38, -Math.PI / 4 - Math.PI / 2, Math.PI / 4 - Math.PI / 2);
+      radarCtx.closePath();
+      radarCtx.fill();
+
+      radarCtx.fillStyle = "#4ade80";
+      radarCtx.beginPath();
+      radarCtx.arc(0, 0, 4.5, 0, Math.PI * 2);
+      radarCtx.fill();
+      radarCtx.restore();
+
+      document.getElementById("radar-coords").innerText = `X: ${player.position.x.toFixed(1)} | Z: ${player.position.z.toFixed(1)}`;
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. MOBILE JOYSTICKS
+    // -------------------------------------------------------------------------
+    let joyMove = { x: 0, y: 0 };
+    if (window.nipplejs) {
+      const leftJoy = nipplejs.create({
+        zone: document.getElementById("joy-left"),
+        mode: "static",
+        position: { left: "65px", bottom: "65px" },
+        color: "#f3c254",
+        size: 85
+      });
+      leftJoy.on("move", (e, data) => { joyMove = { x: data.vector.x, y: data.vector.y }; });
+      leftJoy.on("end", () => { joyMove = { x: 0, y: 0 }; });
+
+      const rightJoy = nipplejs.create({
+        zone: document.getElementById("joy-right"),
+        mode: "static",
+        position: { right: "65px", bottom: "65px" },
+        color: "#38bdf8",
+        size: 85
+      });
+      rightJoy.on("move", (e, data) => {
+        player.yaw -= data.vector.x * 0.04;
+        player.pitch = Math.max(-Math.PI / 2.8, Math.min(Math.PI / 2.8, player.pitch + data.vector.y * 0.03));
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 9. AI GUIDE VOICE & TEXT SYSTEM
+    // -------------------------------------------------------------------------
+    let voiceOn = true;
+
+    function toggleVoice() {
+      voiceOn = !voiceOn;
+      document.getElementById("voice-icon").innerText = voiceOn ? "🔊" : "🔇";
+    }
+
+    function speakText(text) {
+      if (!voiceOn || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.rate = 0.95;
+      utt.pitch = 0.9;
+      window.speechSynthesis.speak(utt);
+    }
+
+    function appendMessage(sender, text) {
+      const chat = document.getElementById("chat-messages");
+      const b = document.createElement("div");
+      b.className = `chat-bubble ${sender}`;
+      b.innerText = text;
+      chat.appendChild(b);
+      chat.scrollTop = chat.scrollHeight;
+
+      if (sender === "monk") speakText(text);
+    }
+
+    function askGuide(q) {
+      document.getElementById("guide-input-field").value = q;
+      sendQuestion();
+    }
+
+    function sendQuestion() {
+      const input = document.getElementById("guide-input-field");
+      const q = input.value.trim();
+      if (!q) return;
+
+      appendMessage("user", q);
+      input.value = "";
+
+      setTimeout(() => {
+        let answer = "According to certified historical records: ";
+        if (q.toLowerCase().includes("statue") || q.toLowerCase().includes("samantabhadra")) {
+          answer += "The Golden Samantabhadra statue stands 48 meters high with 10 faces looking in all directions, representing universal virtue and wisdom.";
+        } else if (q.toLowerCase().includes("summit") || q.toLowerCase().includes("golden summit")) {
+          answer += "The Golden Summit of Mount Emei sits at an elevation of 3,077 meters, one of the Four Sacred Buddhist Mountains.";
+        } else {
+          answer += "This sacred sanctuary has been a revered pilgrimage destination for centuries, famous for its grand golden pavilions and mist-covered peaks.";
+        }
+        appendMessage("monk", answer);
+      }, 350);
+    }
+
+    // -------------------------------------------------------------------------
+    // 10. RENDER LOOP
+    // -------------------------------------------------------------------------
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      // Animate Beacon Diamonds
+      beaconGroup.children.forEach(bg => {
+        const d = bg.getObjectByName("diamond");
+        if (d) {
+          d.rotation.y += 0.025;
+          d.position.y = 3.8 + Math.sin(time * 2.5) * 0.2;
+        }
+      });
+
+      if (currentMode === "walk" || currentMode === "onsite") {
+        const speed = (keys.shift ? player.moveSpeed * 1.8 : player.moveSpeed) * delta;
+        const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
+        const side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
+
+        let isWalking = false;
+
+        if (keys.w) { player.position.addScaledVector(forward, speed); isWalking = true; }
+        if (keys.s) { player.position.addScaledVector(forward, -speed); isWalking = true; }
+        if (keys.a) { player.position.addScaledVector(side, -speed); isWalking = true; }
+        if (keys.d) { player.position.addScaledVector(side, speed); isWalking = true; }
+
+        if (joyMove.y !== 0) { player.position.addScaledVector(forward, joyMove.y * speed); isWalking = true; }
+        if (joyMove.x !== 0) { player.position.addScaledVector(side, joyMove.x * speed); isWalking = true; }
+
+        if (isWalking) {
+          player.bobTimer += delta * 12;
+          player.position.y = 1.65 + Math.sin(player.bobTimer) * 0.04;
+        } else {
+          player.position.y = 1.65;
+        }
+
+        player.position.x = Math.max(-28, Math.min(28, player.position.x));
+        player.position.z = Math.max(-28, Math.min(28, player.position.z));
+
+        camera.position.copy(player.position);
+        camera.rotation.set(0, 0, 0);
+        camera.rotation.y = player.yaw;
+        camera.rotation.x = player.pitch;
+
+        checkSpatialProximity();
+        updateRadarHUD();
+      } else {
+        orbitControls.update();
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Initialize
+    spawnBeacons();
+    loadPhotogrammetricModel(MONASTERIES[currentMonasteryKey].glb);
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
