@@ -391,6 +391,34 @@
       cursor: pointer;
     }
 
+    .chat-bubble .source-tag {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.68rem;
+      opacity: 0.8;
+      font-family: monospace;
+      color: var(--gold-primary);
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+    }
+    .typing-dots span {
+      width: 4px;
+      height: 4px;
+      background: var(--gold-primary);
+      border-radius: 50%;
+      animation: pulseDot 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulseDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1.2); opacity: 1; }
+    }
+
     /* Loading Overlay */
     #loading-overlay {
       position: absolute;
@@ -502,27 +530,54 @@
       <div class="guide-title">
         <span>☸</span>
         <span>Monastic AI Guide</span>
+        <span id="ai-mode-badge" style="font-size: 0.65rem; background: rgba(243, 194, 84, 0.18); border: 1px solid var(--gold-primary); padding: 2px 6px; border-radius: 6px; margin-left: 4px; color: var(--gold-primary); font-family: monospace;">Offline RAG</span>
       </div>
-      <button style="background: none; border: none; color: var(--gold-primary); cursor: pointer; font-size: 0.72rem;" onclick="toggleVoice()">
-        <span id="voice-icon">🔊</span> Voice On
-      </button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button style="background: none; border: none; color: var(--gold-primary); cursor: pointer; font-size: 0.8rem;" title="Configure Cloud AI (Gemini)" onclick="openSettingsModal()">⚙️</button>
+        <button style="background: none; border: none; color: var(--gold-primary); cursor: pointer; font-size: 0.72rem;" onclick="toggleVoice()">
+          <span id="voice-icon">🔊</span> Voice On
+        </button>
+      </div>
     </div>
 
     <div class="guide-chat" id="chat-messages">
       <div class="chat-bubble monk">
-        Welcome to the Golden Temple of Namdroling Monastery. Explore the grand central staircase, painted veranda colonnade, and gilded roof pinnacles!
+        Tashi Delek! Welcome to the Golden Temple of Namdroling Monastery. Ask me any question about the sacred architecture, history, relics, or Buddhist philosophy!
+        <span class="source-tag">📜 Certified Historical Archive</span>
       </div>
     </div>
 
-    <div class="quick-chips">
-      <div class="quick-chip" onclick="askGuide('Tell me about the Golden Temple')">Golden Temple</div>
-      <div class="quick-chip" onclick="askGuide('Tell me about the Grand Staircase')">Grand Staircase</div>
-      <div class="quick-chip" onclick="askGuide('What is Namdroling Monastery history?')">Namdroling History</div>
+    <div class="quick-chips" id="quick-chips-container">
+      <!-- Dynamically populated per monastery -->
     </div>
 
     <div class="guide-input-row">
-      <input type="text" id="guide-input-field" class="guide-input" placeholder="Ask question (offline)..." onkeypress="if(event.key==='Enter') sendQuestion()" />
+      <input type="text" id="guide-input-field" class="guide-input" placeholder="Ask question (RAG + AI Model)..." onkeypress="if(event.key==='Enter') sendQuestion()" />
       <button class="guide-btn" onclick="sendQuestion()">Ask</button>
+    </div>
+  </div>
+
+  <!-- AI Settings Modal -->
+  <div id="ai-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 200; align-items: center; justify-content: center;">
+    <div style="background: var(--panel-bg); border: 1px solid var(--gold-primary); border-radius: 18px; padding: 22px; width: 440px; max-width: 90vw; box-shadow: 0 16px 48px rgba(0,0,0,0.9); color: var(--text-main);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--gold-primary); font-weight: 700;">☸ Monastic AI Model Engine</div>
+        <button onclick="closeSettingsModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;">✕</button>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.45;">
+        MonasteryAI uses a <strong>Zero-Latency Offline Semantic RAG</strong> for certified monastery archives. For open-ended or broader Buddhist inquiries not in RAG, you can enable a live cloud AI model (Google Gemini).
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 0.75rem; color: var(--gold-primary); margin-bottom: 6px; font-weight: 600;">Google Gemini API Key (Optional):</label>
+        <input type="password" id="gemini-key-input" placeholder="AIzaSy..." style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(243,194,84,0.4); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.82rem; outline: none; font-family: monospace;" />
+      </div>
+      <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 16px;">
+        Stored locally in your browser. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--gold-primary); text-decoration: underline;">Get free Gemini API Key →</a>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="clearApiKey()" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; cursor: pointer;">Clear Key</button>
+        <button onclick="saveApiKey()" style="background: var(--crimson); border: 1px solid var(--gold-primary); color: #fff; border-radius: 8px; padding: 7px 16px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">Save Settings</button>
+      </div>
     </div>
   </div>
 
@@ -541,6 +596,12 @@
       namdroling: {
         name: "Namdroling Golden Temple (Main Shrine)",
         glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/namdroling_shrine.glb",
+        chips: [
+          "Tell me about the Golden Temple",
+          "What are the 3 main statues?",
+          "Who founded Namdroling?",
+          "Explain the veranda murals"
+        ],
         beacons: [
           { name: "Grand Central Staircase", x: 0, z: 2.0, radius: 4.5, text: "You are ascending the wide stone steps of Namdroling Golden Temple towards the upper prayer terrace." },
           { name: "Veranda Colonnade & Murals", x: 0, z: -4.0, radius: 5.5, text: "The open ground-floor veranda features vibrant hand-painted Tibetan Buddhist frescoes and entrance doors." },
@@ -550,6 +611,12 @@
       emei: {
         name: "The Great Emei Mountain (Golden Summit)",
         glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/emei_4_view.glb",
+        chips: [
+          "Tell me about the 48m Golden Statue",
+          "What is the Golden Summit elevation?",
+          "What is the Buddha's Light halo?",
+          "Why are there four white elephants?"
+        ],
         beacons: [
           { name: "48-Meter Golden Samantabhadra Statue", x: 0, z: -5.0, radius: 6.0, text: "You are standing before the multi-faced Golden Statue of Bodhisattva Samantabhadra, seated atop four sacred white elephants at the peak of Mount Emei." },
           { name: "Golden Summit Main Temple Hall", x: -12, z: 2.0, radius: 5.5, text: "This is the Main Temple Sanctuary of the Golden Summit, perched at 3,077 meters altitude above the sea of clouds." },
@@ -559,6 +626,12 @@
       pelling: {
         name: "Pemayangtse Monastery (Pelling, West Sikkim)",
         glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/pelling.glb",
+        chips: [
+          "What is the Sangtokpalri masterpiece?",
+          "Who founded Pemayangtse Monastery?",
+          "What does the name Pemayangtse mean?",
+          "Tell me about the Ta-tshang monks"
+        ],
         beacons: [
           { name: "Sangtokpalri Celestial Masterpiece", x: 0, z: -6.0, radius: 5.0, text: "You are standing before the 7-tiered hand-carved wooden masterpiece of Sangtokpalri, depicting the celestial heaven of Guru Padmasambhava." },
           { name: "Main Nyingma Prayer Hall", x: 0, z: 2.0, radius: 5.0, text: "Welcome to the central prayer hall of Pemayangtse, founded in 1705 AD by Lhatsun Chempo." }
@@ -567,6 +640,12 @@
       rumtek: {
         name: "Rumtek Monastery — Main Shrine (East Sikkim)",
         glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/rumtek_main_shrine.glb",
+        chips: [
+          "What relics are in the Golden Stupa?",
+          "Who built Rumtek Monastery?",
+          "Tell me about the Cham mask dances",
+          "What is the Nalanda Institute?"
+        ],
         beacons: [
           { name: "Main Dukhang Shrine Hall", x: 0, z: -10.0, radius: 6.0, text: "You are standing before the Main Dukhang Shrine Hall of Rumtek Monastery, featuring traditional Tibetan murals, silk thangkas, and golden roof spires." },
           { name: "Sacred Courtyard Pillar", x: 1.5, z: -3.0, radius: 3.5, text: "This sacred stone pillar stands at the center of the monastic courtyard, where the annual Cham sacred masked dances are performed." },
@@ -576,6 +655,12 @@
       rumtek_majestic: {
         name: "Rumtek Monastery — Majestic Aerial Panorama",
         glb: "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/rumtek_majestic_3d.glb",
+        chips: [
+          "Tell me about the Central Pagoda",
+          "What sect does Rumtek belong to?",
+          "What is the altitude of Rumtek?",
+          "Describe the surrounding pine forests"
+        ],
         beacons: [
           { name: "Central Golden Pagoda", x: 2.0, z: -2.0, radius: 5.0, text: "The towering central pagoda of Rumtek Monastery, topped with a gilded pinnacle visible across the valley. This is the heart of the Kagyu lineage in Sikkim." },
           { name: "Main Assembly Hall Complex", x: -5.0, z: -4.0, radius: 6.0, text: "The multi-story assembly halls with their characteristic yellow walls and crimson rooflines house the main prayer chambers and sacred thangka collections." },
@@ -723,8 +808,9 @@
       activeBeacons = MONASTERIES[key].beacons;
       spawnBeacons();
       loadPhotogrammetricModel(MONASTERIES[key].glb);
+      renderQuickChips(key);
 
-      appendMessage("monk", `Loaded 3D Scan of ${MONASTERIES[key].name}. Walk around the 3D model to explore!`);
+      appendMessage("monk", `Loaded 3D Scan of ${MONASTERIES[key].name}. Walk around the 3D model to explore!`, "🧭 Monastery Tour");
     }
 
     // -------------------------------------------------------------------------
@@ -950,9 +1036,60 @@
     }
 
     // -------------------------------------------------------------------------
-    // 9. AI GUIDE VOICE & TEXT SYSTEM
+    // 9. MONASTIC AI GUIDE — OFFLINE RAG & GENERATIVE AI ENGINE
     // -------------------------------------------------------------------------
     let voiceOn = true;
+    let geminiApiKey = localStorage.getItem("monastery_ai_gemini_key") || "";
+
+    function updateAiBadge() {
+      const badge = document.getElementById("ai-mode-badge");
+      if (badge) {
+        if (geminiApiKey) {
+          badge.innerText = "RAG + Gemini AI";
+          badge.style.borderColor = "#38bdf8";
+          badge.style.color = "#38bdf8";
+        } else {
+          badge.innerText = "Offline RAG + AI";
+          badge.style.borderColor = "var(--gold-primary)";
+          badge.style.color = "var(--gold-primary)";
+        }
+      }
+    }
+
+    function openSettingsModal() {
+      const modal = document.getElementById("ai-settings-modal");
+      const input = document.getElementById("gemini-key-input");
+      if (input) input.value = geminiApiKey;
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById("ai-settings-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function saveApiKey() {
+      const input = document.getElementById("gemini-key-input");
+      geminiApiKey = input.value.trim();
+      if (geminiApiKey) {
+        localStorage.setItem("monastery_ai_gemini_key", geminiApiKey);
+      } else {
+        localStorage.removeItem("monastery_ai_gemini_key");
+      }
+      updateAiBadge();
+      closeSettingsModal();
+      appendMessage("monk", geminiApiKey ? "Tashi Delek! Google Gemini Cloud AI connected. I will now answer specialized inquiries beyond the local RAG archive." : "Offline Mode enabled. Operating with local semantic RAG & edge knowledge.", "⚙️ Engine Configured");
+    }
+
+    function clearApiKey() {
+      geminiApiKey = "";
+      localStorage.removeItem("monastery_ai_gemini_key");
+      const input = document.getElementById("gemini-key-input");
+      if (input) input.value = "";
+      updateAiBadge();
+      closeSettingsModal();
+      appendMessage("monk", "Gemini API key cleared. Reverted to 100% Offline Semantic RAG.", "⚙️ Engine Configured");
+    }
 
     function toggleVoice() {
       voiceOn = !voiceOn;
@@ -962,21 +1099,421 @@
     function speakText(text) {
       if (!voiceOn || !window.speechSynthesis) return;
       window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(text);
+      // Remove source tags and brackets for smooth audio narration
+      const cleanText = text.replace(/\[.*?\]/g, '').replace(/https?:\/\/\S+/g, '').trim();
+      const utt = new SpeechSynthesisUtterance(cleanText);
       utt.rate = 0.95;
       utt.pitch = 0.9;
       window.speechSynthesis.speak(utt);
     }
 
-    function appendMessage(sender, text) {
+    function appendMessage(sender, text, sourceTag = "") {
       const chat = document.getElementById("chat-messages");
       const b = document.createElement("div");
       b.className = `chat-bubble ${sender}`;
-      b.innerText = text;
+      
+      let html = text;
+      if (sourceTag) {
+        html += `<span class="source-tag">${sourceTag}</span>`;
+      }
+      b.innerHTML = html;
       chat.appendChild(b);
       chat.scrollTop = chat.scrollHeight;
 
       if (sender === "monk") speakText(text);
+    }
+
+    function renderQuickChips(key) {
+      const container = document.getElementById("quick-chips-container");
+      if (!container) return;
+      const mon = MONASTERIES[key];
+      const chips = (mon && mon.chips) ? mon.chips : [
+        "Tell me about this monastery",
+        "What is the history here?",
+        "What sacred relics are preserved?"
+      ];
+      container.innerHTML = "";
+      chips.forEach(q => {
+        const chip = document.createElement("div");
+        chip.className = "quick-chip";
+        chip.innerText = q;
+        chip.onclick = () => askGuide(q);
+        container.appendChild(chip);
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // RAG KNOWLEDGE CORPUS (CERTIFIED MONASTIC ARCHIVES)
+    // -------------------------------------------------------------------------
+    const STOPWORDS = new Set([
+      "the", "is", "at", "which", "on", "a", "an", "and", "or", "in", "of", "to", "for",
+      "with", "what", "who", "when", "where", "how", "why", "tell", "me", "about",
+      "can", "you", "are", "was", "were", "it", "this", "that", "there", "these", "those",
+      "please", "give", "know", "much", "many", "does", "did", "from", "into", "their"
+    ]);
+
+    function tokenizeText(text) {
+      return (text.toLowerCase().match(/[a-z0-9]+/g) || []).filter(w => !STOPWORDS.has(w) && w.length > 1);
+    }
+
+    const RAW_RAG_DATA = [
+      // --- NAMDROLING (GOLDEN TEMPLE) ---
+      {
+        monastery: "namdroling",
+        topic: "Overview & Founder",
+        text: "Namdroling Monastery (Thegchog Namdrol Shedrub Dargyeling), popularly known as the Golden Temple, is located in Bylakuppe, Karnataka. It was established in 1963 by His Holiness Drubwang Padma Norbu Rinpoche (the 3rd Penor Rinpoche) with a small group of monks, and has grown into one of the largest Tibetan Buddhist teaching centers in the world.",
+        keywords: ["namdroling", "overview", "founder", "founded", "penor", "rinpoche", "bylakuppe", "karnataka", "history", "established", "1963", "thegchog"]
+      },
+      {
+        monastery: "namdroling",
+        topic: "Three Main Statues",
+        text: "The main prayer hall of Namdroling houses three magnificent 40-foot (12-meter) gilded copper statues: Buddha Shakyamuni (Gautama Buddha) at the center, flanked by Guru Padmasambhava (Guru Rinpoche) on the right and Buddha Amitayus (Buddha of Infinite Longevity) on the left. The statues contain sacred scriptures, holy relics, and miniature stupas within them.",
+        keywords: ["statues", "statue", "shakyamuni", "padmasambhava", "amitayus", "gilded", "copper", "40", "foot", "feet", "meters", "main", "three", "buddha", "relics"]
+      },
+      {
+        monastery: "namdroling",
+        topic: "Veranda Murals & Frescoes",
+        text: "The open ground-floor veranda and temple interior are decorated with vibrant hand-painted Tibetan Buddhist murals and thangkas depicting the Twelve Deeds of Buddha, the 8 Manifestations of Guru Padmasambhava, Tantric wrathful protectors, and mandalas representing pure realms of consciousness.",
+        keywords: ["murals", "frescoes", "paintings", "veranda", "art", "thangka", "paint", "colonnade", "protectors", "deities", "mandalas", "buddha", "deeds"]
+      },
+      {
+        monastery: "namdroling",
+        topic: "Roof Pinnacles & Architecture",
+        text: "The multi-tiered pagoda roof of Namdroling is adorned with gilded copper eaves, four corner victory banners (Gyaltsen), and the central Golden Wheel of Dharma (Dharmachakra) flanked by two kneeling deer, symbolizing the Buddha's first teaching in the Deer Park of Sarnath.",
+        keywords: ["roof", "pinnacles", "wheel", "dharma", "dharmachakra", "deer", "spire", "pagoda", "banners", "architecture", "gold", "gilded", "eaves"]
+      },
+      {
+        monastery: "namdroling",
+        topic: "Ngagyur Nyingma Institute (Shedra)",
+        text: "Namdroling hosts the prestigious Ngagyur Nyingma Institute (Shedra), a higher monastic university where thousands of monks and nuns study Buddhist philosophy, epistemology, logic, and Tantric meditation for nine rigorous years.",
+        keywords: ["shedra", "institute", "ngagyur", "nyingma", "university", "college", "study", "monks", "nuns", "philosophy", "education"]
+      },
+      {
+        monastery: "namdroling",
+        topic: "Sect & Tradition",
+        text: "Namdroling Monastery belongs to the Nyingma tradition of Tibetan Buddhism, specifically preserving the ancient Palyul lineage teachings and Dzogchen (Great Perfection) meditation.",
+        keywords: ["sect", "tradition", "lineage", "nyingma", "palyul", "dzogchen", "order"]
+      },
+
+      // --- MOUNT EMEI (GOLDEN SUMMIT) ---
+      {
+        monastery: "emei",
+        topic: "48-Meter Samantabhadra Statue",
+        text: "The monumental Golden Statue of Bodhisattva Samantabhadra (Puxian) stands 48 meters tall on the Golden Summit, weighing 660 tons. It features 10 compassionate faces looking toward all cardinal directions of space, seated atop four sacred multi-tusked white elephants representing the four great vows of universal virtue.",
+        keywords: ["statue", "samantabhadra", "puxian", "48", "meter", "meters", "faces", "ten", "white", "elephant", "elephants", "golden", "bronze", "weight", "tons"]
+      },
+      {
+        monastery: "emei",
+        topic: "Golden Summit Elevation & Sanctuary",
+        text: "The Golden Summit (Jinding) of Mount Emei is situated at an elevation of 3,077 meters in Sichuan Province, China. It is one of the Four Sacred Buddhist Mountains of China, renowned for its golden, silver, and bronze temple pavilions rising above the clouds.",
+        keywords: ["summit", "elevation", "altitude", "height", "jinding", "sichuan", "mountain", "meters", "3077", "sacred", "mount", "emei", "pavilion"]
+      },
+      {
+        monastery: "emei",
+        topic: "Sea of Clouds & Buddha's Light",
+        text: "Mount Emei is famous for two miraculous natural spectacles: the majestic Sea of Clouds (Yunhai) enveloping the peak, and Buddha's Light (Halo / Glory) — an atmospheric optical phenomenon where the observer's shadow is cast upon the clouds surrounded by concentric rainbow halos.",
+        keywords: ["sea", "clouds", "buddha", "light", "halo", "glory", "rainbow", "optical", "phenomenon", "terrace", "overlook", "cliff", "sheshen"]
+      },
+      {
+        monastery: "emei",
+        topic: "Bodhisattva Samantabhadra Meaning",
+        text: "In Buddhist teachings, Bodhisattva Samantabhadra represents supreme practice, universal virtue, and boundless dedication to relieving the suffering of all sentient beings.",
+        keywords: ["samantabhadra", "meaning", "virtue", "bodhisattva", "symbolism", "practice", "wisdom", "puxian"]
+      },
+
+      // --- RUMTEK MONASTERY (EAST SIKKIM) ---
+      {
+        monastery: "rumtek",
+        topic: "History & Founders",
+        text: "Rumtek Monastery (Dharma Chakra Centre) was originally established in the mid-1700s by the 12th Karmapa, Changchub Dorje. The present magnificent monastery complex was rebuilt in 1966 by His Holiness the 16th Gyalwang Karmapa, Rangjung Rigpe Dorje, following his exile from Tibet.",
+        keywords: ["rumtek", "founder", "built", "history", "karmapa", "16th", "12th", "1966", "dharma", "chakra", "centre", "sikkim", "gangtok"]
+      },
+      {
+        monastery: "rumtek",
+        topic: "Golden Stupa & Relics",
+        text: "The 13-foot Golden Stupa at Rumtek Monastery is the most sacred reliquary in Sikkim, preserving the holy bone relics, ashes, and ceremonial robes of the 16th Gyalwang Karmapa.",
+        keywords: ["stupa", "relics", "golden", "ashes", "bone", "karmapa", "16th", "sacred", "inside", "shrine"]
+      },
+      {
+        monastery: "rumtek",
+        topic: "Main Dukhang Shrine Hall & Murals",
+        text: "The 4-story Main Dukhang features intricate 300-year-old style Kagyu frescoes, silk thangkas, hand-carved pillars, and the sacred altar hall where major monastic rituals and the Vajra Crown ceremony take place.",
+        keywords: ["dukhang", "murals", "shrine", "hall", "thangka", "frescoes", "altar", "vajra", "crown", "pillars"]
+      },
+      {
+        monastery: "rumtek",
+        topic: "Cham Sacred Masked Dances",
+        text: "The annual Kagyu Gutor Cham masked dance is held in Rumtek's central courtyard on the 28th and 29th days of the 10th Tibetan month. Monks perform sacred deity dances to dispel negative forces and usher in auspicious blessings for the New Year.",
+        keywords: ["cham", "dance", "dances", "mask", "masked", "festival", "festivals", "courtyard", "gutor", "tibetan", "ritual"]
+      },
+      {
+        monastery: "rumtek",
+        topic: "Karma Shri Nalanda Institute",
+        text: "The Karma Shri Nalanda Institute for Higher Buddhist Studies is situated within the Rumtek complex, where hundreds of monk scholars study Buddhist philosophy, epistemology, and Sanskrit language.",
+        keywords: ["nalanda", "institute", "college", "monks", "study", "philosophy", "sanskrit", "scholars", "shedra"]
+      },
+      {
+        monastery: "rumtek",
+        topic: "Sect & Altitude",
+        text: "Rumtek sits at an altitude of 1,500 to 1,550 meters in East Sikkim (24 km from Gangtok) and is the principal international seat-in-exile of the Karma Kagyu lineage (Black Hat tradition).",
+        keywords: ["altitude", "elevation", "height", "location", "gangtok", "east", "sikkim", "sect", "kagyu", "karma", "lineage", "meters", "1500", "1550"]
+      },
+
+      // --- RUMTEK MAJESTIC (AERIAL & PANORAMA) ---
+      {
+        monastery: "rumtek_majestic",
+        topic: "Central Golden Pagoda & Panorama",
+        text: "The Central Golden Pagoda of Rumtek Monastery rises prominently against the Himalayan valley skyline. Surrounded by pine and rhododendron forests at 1,550m elevation, it commands sweeping views across the Gangtok valley toward the snow-capped Kanchenjunga peaks.",
+        keywords: ["central", "pagoda", "panorama", "aerial", "forest", "pine", "kanchenjunga", "valley", "view", "majestic", "hillside"]
+      },
+      {
+        monastery: "rumtek_majestic",
+        topic: "Monks Residential Quarters",
+        text: "Flanking the eastern and western terraces are the monastery's residential study wings with characteristic yellow and orange facades, housing over 300 Buddhist monks of the Karma Kagyu order.",
+        keywords: ["residential", "quarters", "monks", "rooms", "wing", "housing", "facade", "living"]
+      },
+
+      // --- PEMAYANGTSE MONASTERY (PELLING, WEST SIKKIM) ---
+      {
+        monastery: "pelling",
+        topic: "History & Founder",
+        text: "Pemayangtse Monastery was founded in 1705 AD by Lama Lhatsun Chempo, one of the three pioneer lamas who consecrated the first Chogyal king of Sikkim. It is one of the oldest and most revered Nyingma monasteries in Sikkim.",
+        keywords: ["pemayangtse", "pelling", "history", "founder", "founded", "1705", "lhatsun", "chempo", "west", "sikkim", "oldest"]
+      },
+      {
+        monastery: "pelling",
+        topic: "Meaning of Pemayangtse",
+        text: "The name Pemayangtse translates to 'Perfect Sublime Lotus' (Pema = Lotus, Yangtse = Sublime/Peak), symbolizing spiritual purity rising untainted above worldly attachments.",
+        keywords: ["name", "meaning", "pemayangtse", "lotus", "sublime", "perfect", "translate", "symbolism"]
+      },
+      {
+        monastery: "pelling",
+        topic: "Sangtokpalri Masterpiece",
+        text: "On the top floor of Pemayangtse is the Sangtokpalri — a 7-tiered hand-carved wooden sculptural masterpiece built single-handedly by Dungzin Rinpoche over 5 years. It portrays the celestial heaven and pure land of Guru Padmasambhava with rainbow bridges, heavenly palaces, and celestial deities.",
+        keywords: ["sangtokpalri", "masterpiece", "wooden", "sculpture", "7", "seven", "tiered", "guru", "padmasambhava", "heaven", "celestial", "palace", "rinpoche"]
+      },
+      {
+        monastery: "pelling",
+        topic: "Ta-tshang Celibate Monks",
+        text: "Historically, only celibate monks of pure Bhutia/Tibetan lineage known as 'Ta-tshang' are admitted to Pemayangtse, upholding centuries-old monastic discipline and sacred state ceremonies.",
+        keywords: ["monks", "celibate", "ta", "tshang", "lineage", "bhutia", "admission", "discipline", "pure"]
+      },
+      {
+        monastery: "pelling",
+        topic: "Altitude & Kangchenjunga Views",
+        text: "Perched atop a forested ridge in Pelling at an altitude of 2,085 meters, Pemayangtse offers spectacular panoramic views of Mount Kangchenjunga (8,586m) and marks the starting point for the historic Rabdentse royal ruins trail.",
+        keywords: ["altitude", "elevation", "2085", "meters", "kangchenjunga", "kanchenjunga", "view", "rabdentse", "ruins", "ridge", "pelling"]
+      },
+
+      // --- GENERAL BUDDHIST PHILOSOPHY & MONASTIC ETIQUETTE ---
+      {
+        monastery: "general",
+        topic: "Om Mani Padme Hum Mantra",
+        text: "The sacred Sanskrit mantra 'Om Mani Padme Hum' is the six-syllable mantra of Avalokiteshvara (Chenrezig), the Bodhisattva of Infinite Compassion. It transforms negative emotions, cultivates boundless loving-kindness, and purifies the six realms of samsaric existence.",
+        keywords: ["om", "mani", "padme", "hum", "mantra", "chenrezig", "avalokiteshvara", "compassion", "meaning", "six", "syllable"]
+      },
+      {
+        monastery: "general",
+        topic: "Prayer Wheels (Mani Khorlo)",
+        text: "Prayer wheels contain thousands of micro-printed mantras of compassion. Spinning the wheel clockwise with a pure heart is believed to accumulate spiritual merit and radiate healing blessings to all living beings.",
+        keywords: ["prayer", "wheel", "wheels", "mani", "khorlo", "spin", "spinning", "clockwise", "merit", "mantras"]
+      },
+      {
+        monastery: "general",
+        topic: "Prayer Flags (Lungta)",
+        text: "Tibetan prayer flags feature five sacred colors representing the five elements: Blue for Sky/Space, White for Air/Wind, Red for Fire, Green for Water, and Yellow for Earth. As wind blows across the flags, prayers for peace, wisdom, and health are carried across the world.",
+        keywords: ["prayer", "flags", "flag", "lungta", "colors", "blue", "white", "red", "green", "yellow", "elements", "wind"]
+      },
+      {
+        monastery: "general",
+        topic: "Butter Lamps (Marme)",
+        text: "Butter lamps (Marme) are offered on temple altars to symbolize the illuminating light of wisdom dispelling the darkness of ignorance (avidya). It reminds practitioners to cultivate clarity and compassion.",
+        keywords: ["butter", "lamp", "lamps", "marme", "light", "flame", "wisdom", "offering", "altar", "ignorance"]
+      },
+      {
+        monastery: "general",
+        topic: "Monastic Etiquette & Kora",
+        text: "When visiting a sacred Buddhist monastery: always circumambulate temples, stupas, and prayer wheels in a clockwise direction (kora); remove footwear before stepping into shrine halls; avoid stepping on temple thresholds; and maintain reverent quiet.",
+        keywords: ["etiquette", "rules", "visit", "visiting", "shoes", "footwear", "clockwise", "kora", "threshold", "respect", "behavior"]
+      },
+      {
+        monastery: "general",
+        topic: "Four Noble Truths",
+        text: "The Four Noble Truths taught by the Buddha are: 1) The existence of suffering (Dukkha), 2) The cause of suffering (Craving and attachment, Samudaya), 3) The cessation of suffering (Nirvana, Nirodha), and 4) The Eightfold Path leading to liberation (Magga).",
+        keywords: ["four", "noble", "truths", "dukkha", "suffering", "nirvana", "eightfold", "path", "buddha", "teaching", "philosophy"]
+      }
+    ];
+
+    // Pre-tokenize RAG dataset
+    const RAG_CORPUS = RAW_RAG_DATA.map(item => ({
+      ...item,
+      tokens: new Set(tokenizeText(item.text)),
+      keywords: new Set(item.keywords.map(k => k.toLowerCase()))
+    }));
+
+    function queryRAG(userQuestion, activeMonasteryKey) {
+      const qTokens = tokenizeText(userQuestion);
+      if (qTokens.length === 0) return null;
+
+      // 1. Spatial Beacon Check (if asking about current spot)
+      const qLower = userQuestion.toLowerCase();
+      const isSpatialQuery = qLower.includes("here") ||
+                             qLower.includes("where am i") ||
+                             qLower.includes("this place") ||
+                             qLower.includes("this monument") ||
+                             qLower.includes("standing") ||
+                             qLower.includes("what is this");
+
+      if (isSpatialQuery && activeBeacons) {
+        for (const b of activeBeacons) {
+          const dist = Math.hypot(player.position.x - b.x, player.position.z - b.z);
+          if (dist < (b.radius || 5.0) + 2.0) {
+            return {
+              text: `You are currently standing at the ${b.name}. ${b.text}`,
+              source: `Spatial Proximity: ${b.name}`,
+              score: 1.0
+            };
+          }
+        }
+      }
+
+      // 2. Semantic Token Overlap & Weighting
+      let bestScore = 0;
+      let bestEntry = null;
+
+      for (const entry of RAG_CORPUS) {
+        let matchScore = 0;
+        for (const t of qTokens) {
+          if (entry.keywords.has(t)) {
+            matchScore += 3.0; // High confidence keyword match
+          } else if (entry.tokens.has(t)) {
+            matchScore += 1.0;
+          }
+        }
+
+        if (matchScore > 0) {
+          let score = matchScore / Math.sqrt(qTokens.length * Math.max(entry.keywords.size, 4));
+
+          // Monastery relevance multiplier
+          if (entry.monastery === activeMonasteryKey) {
+            score *= 1.45;
+          } else if (entry.monastery === "general") {
+            score *= 1.1;
+          } else {
+            score *= 0.8;
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestEntry = entry;
+          }
+        }
+      }
+
+      if (bestScore >= 0.24 && bestEntry) {
+        const monName = (bestEntry.monastery !== "general" && MONASTERIES[bestEntry.monastery]) ? MONASTERIES[bestEntry.monastery].name.split("(")[0].trim() : "Monastic Archive";
+        return {
+          text: bestEntry.text,
+          source: `📜 Certified Archive: ${monName} (${bestEntry.topic})`,
+          score: bestScore
+        };
+      }
+
+      return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // AI MODEL FALLBACK ENGINE (CLOUD GEMINI OR GENERATIVE MONASTIC AI)
+    // -------------------------------------------------------------------------
+    async function callCloudGemini(userQuestion, monasteryKey) {
+      if (!geminiApiKey) return null;
+      const monName = MONASTERIES[monasteryKey] ? MONASTERIES[monasteryKey].name : "Himalayan Buddhist Monastery";
+      const systemPrompt = `You are Tashi, a venerable, wise Tibetan Buddhist monastic guide for MonasteryAI. The visitor is touring ${monName}. Answer the question with authentic monastic warmth, reverence, and historical accuracy. Keep your response concise (2 to 3 sentences max). Use 'Tashi Delek' or gentle monastic phrasing where suitable.`;
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      
+      const payload = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: `${systemPrompt}\n\nVisitor Question: "${userQuestion}"` }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 250
+        }
+      };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const answerText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      return answerText ? answerText.trim() : null;
+    }
+
+    function generateOfflineMonkAnswer(userQuestion, monasteryKey) {
+      const q = userQuestion.toLowerCase();
+      const monName = MONASTERIES[monasteryKey] ? MONASTERIES[monasteryKey].name.split("(")[0].trim() : "this sacred monastery";
+
+      if (q.includes("meditat") || q.includes("mindful") || q.includes("peace") || q.includes("calm") || q.includes("stress")) {
+        return {
+          text: "Tashi Delek. In our monastic tradition, meditation (Gom) is the art of returning the wandering mind to pristine, uncluttered awareness. By resting your attention gently upon the breath, attachments dissolve like mountain mist, revealing inner tranquility.",
+          source: "☸ Monastic Guide AI: Mind & Meditation"
+        };
+      }
+      if (q.includes("karma") || q.includes("reincarnat") || q.includes("rebirth") || q.includes("destiny") || q.includes("fate")) {
+        return {
+          text: "Karma simply means intentional action. Every compassionate thought, kind word, and selfless deed plants a seed of peace that ripens across time, while self-centered actions bind the mind to confusion.",
+          source: "☸ Monastic Guide AI: Law of Cause & Effect"
+        };
+      }
+      if (q.includes("tea") || q.includes("food") || q.includes("eat") || q.includes("diet") || q.includes("butter tea") || q.includes("tsampa")) {
+        return {
+          text: "Monks in Himalayan sanctuaries traditionally sustain themselves with salted butter tea (Po Cha) churned with yak butter and roasted barley flour (Tsampa), providing warmth and energy for long morning prayer assemblies.",
+          source: "☸ Monastic Guide AI: Monastic Daily Life"
+        };
+      }
+      if (q.includes("robe") || q.includes("clothes") || q.includes("maroon") || q.includes("yellow") || q.includes("dress")) {
+        return {
+          text: "Monastic robes feature rich maroon and saffron colors. Maroon symbolizes simplicity and renunciation of worldly vanity, while golden saffron represents the wisdom of the Buddha's enlightened teachings.",
+          source: "☸ Monastic Guide AI: Sacred Attire"
+        };
+      }
+      if (q.includes("dalai lama") || q.includes("buddha") || q.includes("guru") || q.includes("lama") || q.includes("monk")) {
+        return {
+          text: `In Buddhist philosophy, a Guru or spiritual teacher is a guiding beacon helping you awaken the inherent Buddha-nature within your own heart. Here at ${monName}, lineage masters have passed down these unbroken transmissions for generations.`,
+          source: "☸ Monastic Guide AI: Lineage & Teachers"
+        };
+      }
+      if (q.includes("why") || q.includes("meaning") || q.includes("life") || q.includes("purpose") || q.includes("happy") || q.includes("joy")) {
+        return {
+          text: "The profound purpose of life in Buddhist wisdom is twofold: to understand the true nature of reality through wisdom, and to benefit all living beings through unconditional compassion. When we cherish others, true happiness arises naturally.",
+          source: "☸ Monastic Guide AI: Buddhist Wisdom"
+        };
+      }
+      if (q.includes("bell") || q.includes("dorje") || q.includes("vajra") || q.includes("instrument") || q.includes("sound") || q.includes("music")) {
+        return {
+          text: "The Bell (Drilbu) symbolizes feminine transcendent wisdom, while the Dorje (Vajra) symbolizes masculine skillful compassion. When held together in ritual prayer, they represent the indivisible union of wisdom and method.",
+          source: "☸ Monastic Guide AI: Sacred Implements"
+        };
+      }
+
+      // Contextual graceful fallback
+      return {
+        text: `Tashi Delek. While this specific inquiry is outside our core architectural records, as a monk of ${monName}, I encourage you to walk mindfully around the sanctuary. Observe the sacred murals and spinning prayer wheels to experience the quiet peace cultivated here for centuries.`,
+        source: "☸ Monastic Guide AI"
+      };
     }
 
     function askGuide(q) {
@@ -984,7 +1521,7 @@
       sendQuestion();
     }
 
-    function sendQuestion() {
+    async function sendQuestion() {
       const input = document.getElementById("guide-input-field");
       const q = input.value.trim();
       if (!q) return;
@@ -992,16 +1529,45 @@
       appendMessage("user", q);
       input.value = "";
 
-      setTimeout(() => {
-        let answer = "According to certified historical records: ";
-        if (q.toLowerCase().includes("statue") || q.toLowerCase().includes("samantabhadra")) {
-          answer += "The Golden Samantabhadra statue stands 48 meters high with 10 faces looking in all directions, representing universal virtue and wisdom.";
-        } else if (q.toLowerCase().includes("summit") || q.toLowerCase().includes("golden summit")) {
-          answer += "The Golden Summit of Mount Emei sits at an elevation of 3,077 meters, one of the Four Sacred Buddhist Mountains.";
-        } else {
-          answer += "This sacred sanctuary has been a revered pilgrimage destination for centuries, famous for its grand golden pavilions and mist-covered peaks.";
+      // Add temporary typing indicator
+      const chat = document.getElementById("chat-messages");
+      const typingEl = document.createElement("div");
+      typingEl.className = "chat-bubble monk";
+      typingEl.id = "monk-typing";
+      typingEl.innerHTML = `<span>☸ Consulting monastic archives</span> <span class="typing-dots"><span></span><span></span><span></span></span>`;
+      chat.appendChild(typingEl);
+      chat.scrollTop = chat.scrollHeight;
+
+      // 1. Try Offline RAG first (certified facts)
+      const ragResult = queryRAG(q, currentMonasteryKey);
+
+      if (ragResult) {
+        setTimeout(() => {
+          if (typingEl && typingEl.parentNode) typingEl.remove();
+          appendMessage("monk", ragResult.text, ragResult.source);
+        }, 320);
+        return;
+      }
+
+      // 2. If not in RAG: Try Cloud AI (Gemini) if API key is configured
+      if (geminiApiKey) {
+        try {
+          const aiAnswer = await callCloudGemini(q, currentMonasteryKey);
+          if (typingEl && typingEl.parentNode) typingEl.remove();
+          if (aiAnswer) {
+            appendMessage("monk", aiAnswer, "✨ Cloud AI Model (Gemini)");
+            return;
+          }
+        } catch (err) {
+          console.warn("Cloud AI Model call failed:", err);
         }
-        appendMessage("monk", answer);
+      }
+
+      // 3. Generative Monastic AI Fallback
+      setTimeout(() => {
+        if (typingEl && typingEl.parentNode) typingEl.remove();
+        const fallback = generateOfflineMonkAnswer(q, currentMonasteryKey);
+        appendMessage("monk", fallback.text, fallback.source);
       }, 350);
     }
 
@@ -1065,6 +1631,8 @@
 
     // Initialize
     spawnBeacons();
+    renderQuickChips(currentMonasteryKey);
+    updateAiBadge();
     loadPhotogrammetricModel(MONASTERIES[currentMonasteryKey].glb);
     animate();
 

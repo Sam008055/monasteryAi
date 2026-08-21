@@ -1,5 +1,61 @@
 [
   {
+    "id": "namdroling",
+    "name": "Namdroling Monastery (Golden Temple)",
+    "district": "Bylakuppe, Mysore, Karnataka",
+    "altitude_meters": 800,
+    "founded_year": 1963,
+    "sect": "Nyingma (Palyul Lineage)",
+    "glb_url": "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/namdroling_shrine.glb",
+    "description": "Namdroling Monastery (Thegchog Namdrol Shedrub Dargyeling), popularly known as the Golden Temple, was founded in 1963 by His Holiness the 3rd Penor Rinpoche. It is one of the largest teaching centers of the Nyingma lineage in the world, home to over 4,000 monks and nuns.",
+    "key_features": [
+      "Three 40-foot gilded copper statues of Buddha Shakyamuni, Guru Padmasambhava, and Buddha Amitayus",
+      "Vibrant multi-story hand-painted murals depicting the Twelve Deeds of Buddha and peaceful/wrathful deities",
+      "Ngagyur Nyingma Institute (higher Buddhist philosophy shedra university)",
+      "Gilded roof pinnacles and Golden Wheel of Dharma (Dharmachakra) flanked by two deer"
+    ],
+    "faqs": [
+      {
+        "q": "Who founded Namdroling Monastery?",
+        "a": "Namdroling was established in 1963 by His Holiness Drubwang Padma Norbu Rinpoche (3rd Penor Rinpoche) with a small group of monks in the bamboo forests of Bylakuppe."
+      },
+      {
+        "q": "What are the three main statues inside the Golden Temple?",
+        "a": "The sanctum houses three 40-foot gilded statues: Buddha Shakyamuni at the center, flanked by Guru Padmasambhava on the right and Buddha Amitayus on the left."
+      },
+      {
+        "q": "What is the Tibetan name for Namdroling Golden Temple?",
+        "a": "The temple is formally named Padma Sambhava Buddhist Vihara, part of Thegchog Namdrol Shedrub Dargyeling."
+      }
+    ]
+  },
+  {
+    "id": "emei",
+    "name": "Mount Emei (Golden Summit / Jinding)",
+    "district": "Sichuan Province, China",
+    "altitude_meters": 3077,
+    "founded_year": 100,
+    "sect": "Mahayana Buddhism (Bodhisattva Samantabhadra)",
+    "glb_url": "https://ygdmzmqkztwpmkdozzsp.supabase.co/storage/v1/object/public/monasteries/emei_4_view.glb",
+    "description": "The Golden Summit of Mount Emei sits at an altitude of 3,077 meters, one of the Four Sacred Buddhist Mountains of China. It is crowned by the monumental 48-meter multi-faced Golden Statue of Bodhisattva Samantabhadra above the sea of clouds.",
+    "key_features": [
+      "48-meter tall Golden Statue of Bodhisattva Samantabhadra with 10 faces seated on 4 white elephants",
+      "Golden Summit Main Temple Hall (Jinding) and Bronze Hall",
+      "Atmospheric Buddha's Light (halo/glory phenomenon) over the misty mountain valleys",
+      "Panoramic Sea of Clouds overlook terrace at 3,077m elevation"
+    ],
+    "faqs": [
+      {
+        "q": "What is the height of the Golden Samantabhadra statue?",
+        "a": "The statue stands 48 meters high, weighs 660 tons of bronze with gold gilding, and features 10 compassionate faces looking toward all ten directions of space."
+      },
+      {
+        "q": "What is Buddha's Light on Mount Emei?",
+        "a": "Buddha's Light is a natural diffraction halo phenomenon where sunlight casts the viewer's shadow onto the sea of clouds surrounded by rainbow rings."
+      }
+    ]
+  },
+  {
     "id": "rumtek",
     "name": "Rumtek Monastery (Dharma Chakra Centre)",
     "district": "East Sikkim",
