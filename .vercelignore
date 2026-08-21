@@ -1,0 +1,25 @@
+# Ignore heavy local training videos, datasets, and python pipelines for fast Vercel edge deployment
+videos/
+data/
+dist/
+kaggle_dataset_emei/
+kaggle_dataset_emei_120/
+kaggle_kernel/
+*.glb
+*.splat
+*.ply
+*.spz
+*.mp4
+*.webm
+*.avi
+*.mov
+*.pdf
+*.py
+*.ipynb
+*.env
+.env
+.env.*
+.git
+.vscode
+.idea
+__pycache__/
